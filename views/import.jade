@@ -1,4 +1,36 @@
 extends layout
 
 block content
-	h1= 'Import'
+	a(href='/addmember', class='btn.btn-default') Mailchimp
+	table#example.display(cellspacing='0', width='100%')
+		thead
+			tr
+				th Name
+				th Phone
+				th Email
+				th Title
+				th Department
+		tfoot
+			tr
+				th Name
+				th Phone
+				th Email
+				th Title
+				th Department
+	script(src='//code.jquery.com/jquery-1.12.4.js')
+	script(src='https://cdn.datatables.net/1.10.13/js/jquery.dataTables.min.js')
+	script.
+		$(document).ready(function() {
+		var data = !{JSON.stringify(data)};
+		$('#example').DataTable( {
+		"processing": true,
+		"data": data,
+		"columns": [
+		{ "data": "Name" , "defaultContent": ""},
+		{ "data": "Phone" , "defaultContent": ""},
+		{ "data": "Email" , "defaultContent": ""},
+		{ "data": "Title" , "defaultContent": ""},
+		{ "data": "Department" , "defaultContent": ""}
+		]
+		} );
+		} );

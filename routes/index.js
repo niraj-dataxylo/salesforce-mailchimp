@@ -7,13 +7,15 @@ var router = express.Router();
 var url = require('url');
 var cmd = require('node-cmd');
 var Account = require('../models/account.js');
+var Mailchimp = require('mailchimp-api-v3')
 var conn;
 var user = {name: ''};
+var mailchimp = new Mailchimp('691942aacc639712ee6fbec4334e12c9-us12');
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
 	if(req.session && req.session.user){
-		res.render('index', { title: 'Express' });
+		res.render('index', {});
 	}
 	else{	
 		res.redirect('/login');
@@ -65,7 +67,7 @@ router.get('/accounts', function(req, res, next) {
 	  		res.json("Something went wrong, please try after some time");
 	  	}
 	  	for(var item of records){
-	  		var account = new Account();
+	  		var account = new Account(item);
 	  		account.save(function (err) {
 			  if (err) return handleError(err);
 			  data.counter++;
@@ -78,10 +80,11 @@ router.get('/accounts', function(req, res, next) {
 
 router.get('/import', function(req, res, next) {
 	Account.find({}, function(err, users) {
-
-	    res.json(users);  
+		if(err)
+			res.render('import', {error: true});
+		else
+	    	res.render('import', {data: users});  
 	  });
-	  // res.render('import', {});
 });
 
 router.get('/mailchimp', function(req, res, next){
@@ -94,11 +97,75 @@ router.get('/oauth', function(req, res, next){
         command,
         function(data){
         	req.session.mailchimp = JSON.parse(data.slice(data.lastIndexOf('{'), data.lastIndexOf('}') + 1));
+        	var command = "curl --request GET -H 'Authorization: OAuth " + req.session.mailchimp.access_token + "' --url 'https://login.mailchimp.com/oauth2/metadata' --include";
+			cmd.get(
+		        command,
+		        function(data){
+		        	req.session.mailchimp.api_endpoint = JSON.parse('{"' + data.substr(data.lastIndexOf("api_endpoint"))).api_endpoint;
+		        	res.send(req.session.mailchimp);
+		        });
         }
     );
 });
 
-router.get('/oauthgettoken', function(req, res, next){
+router.get('/getlists', function(req, res, next){
+	mailchimp.get({
+	  path : '/lists?count=25'
+	}, function (err, result) {
+		if(err)
+			res.json(err);
+		res.json(result);
+	})
+})
+
+router.get('/createlists', function(req, res, next){
+	res.render('list', {});  
+})
+
+router.post('/createlists', function(req, res, next){
+	mailchimp.post({
+	  path : '/lists'
+	}, function (err, result) {
+		if(err)
+			res.json(err);
+		res.json(result);
+	})
+})
+
+router.get('/addmember', function(req, res, next){
+	var data = {length: 0, counter: 0};
+	var bool =true;
+	Account.find().select({FirstName : 1, LastName : 1, Email: 1, _id: 0}).exec(function(err, records) {
+	  	data.length = records.length;
+		if(err)
+			res.render('import', {error: true});
+		for(var i = 0; i < records.length; i++){
+			if(bool)
+			console.log(records[i])
+		bool=false;
+			var mailchimpData = {
+			  path : '/lists/d67e77a581/members',
+			  body: {email_address: records[i].Email,
+			    status: "subscribed",
+			    merge_fields: {
+			        FNAME: records[i].FirstName,
+			        LNAME: records[i].LastName
+			    	}
+				}
+			};
+		mailchimp.post(mailchimpData, function (err, result) {
+				if(err)
+					// console.log(err);
+				data.counter++;
+				if(data.counter == data.length){
+					res.render('list', {});  
+				}
+				console.log(result);
+			}) 
+		}
+
+	  });
+	
 })
 
 

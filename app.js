@@ -29,6 +29,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(expressSession({secret:'salesforce'}));
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(rewrite(/^\/i(\w+)/, '/test_node/$1'));
 
 app.use('/', index);
 app.use('/users', users);
@@ -59,7 +60,9 @@ server.on('listening', onListening);
 
 
 mongoose.connect('mongodb://localhost:27017/test');
-
+mongoose.connection.collections['accounts'].drop( function(err) {
+    console.log('collection dropped');
+});
 /**
  * Normalize a port into a number, string, or false.
  */
