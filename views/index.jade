@@ -1,0 +1,9 @@
+extends layout
+
+block content
+	form(action='/accounts', method='GET')
+		.checkbox
+			label
+				input(type='checkbox')
+				|  Accounts
+		button.btn.btn-default(type='submit') Submit

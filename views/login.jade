@@ -1,0 +1,17 @@
+extends layout
+
+block content
+	if error
+		h1= 'Incorrect credentials'
+	else
+		form(method='POST', action='/login')
+			.form-group
+				label(for='email') Email address:
+				input#email.form-control(type='email', name='username')
+			.form-group
+				label(for='pwd') Password:
+				input#pwd.form-control(type='password', name='password')
+			.form-group
+				label(for='security') Security token:
+				input#security.form-control(type='text', name='securityToken')
+			button.btn.btn-default(type='submit') Submit
